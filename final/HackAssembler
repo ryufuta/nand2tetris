@@ -1,0 +1,236 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# 前提
+# ・ファイルの末尾はコメント行や空行ではない
+
+class HackAssembler
+  def initialize(path)
+    @parser = Parser.new(path)
+    @code = Code.new
+    @symbol_table = SymbolTable.new
+    @file_name = path.sub(/\.asm$/, '.hack') # 出力するファイル名を取得
+  end
+
+  def execute
+    # 第1パス ラベルシンボルをシンボルテーブルに追加
+    line_number = -1
+    while @parser.has_more_lines?
+      @parser.advance
+      if @parser.instruction_type == :l_instruction
+        # シンボルテーブルに追加
+        symbol = @parser.symbol # ラベル名
+        address = line_number + 1
+        @symbol_table.add_entry(symbol, address)
+      else
+        line_number += 1
+      end
+    end
+
+    @parser.reset
+
+    # 第2パス
+    max_data_address = 16
+    binary_codes = []
+    while @parser.has_more_lines?
+      @parser.advance
+      case @parser.instruction_type
+      in :a_instruction
+        # A 命令をバイナリに変換
+        symbol = @parser.symbol # 10進数またはシンボルxxxの文字列
+        if !!(symbol =~ /^\d+$/) # 数値かどうかを判定
+          address = symbol.to_i
+        else
+          # シンボルテーブルを検索して、 見つかればアドレスを取得し、見つからなければアドレスを発行してシンボルテーブルに追加
+          if @symbol_table.contains?(symbol)
+            address = @symbol_table.get_address(symbol)
+          else
+            address = max_data_address
+            @symbol_table.add_entry(symbol, max_data_address)
+            max_data_address += 1
+          end
+        end
+        # symbolを16ビット2進数の文字列に変換
+        # 例：@10 のときは、0000000000001010 に変換
+        binary = address.to_s(2).rjust(16, '0')
+        binary_codes.append(binary)
+      in :c_instruction
+        # C 命令をバイナリに変換
+        # comp,dest,jumpのニーモニックを作成
+        comp = @parser.comp # ニーモニック M=D+1 ならば D+1
+        dest = @parser.dest # ニーモニック M=D+1 ならば M
+        jump = @parser.jump # ニーモニック（JGT, JMP など）が返る
+        # バイナリを作成（ニーモニックを受け取りバイナリを返す）
+        binary = '111' + @code.comp(comp) + @code.dest(dest) + @code.jump(jump)
+        binary_codes.append(binary)
+      in :l_instruction
+      end
+    end
+    # 生成したバイナリコードを出力ファイルに書き込み
+    # ↓ Ruby のドキュメントを参考にして適当に書いたコードなので、もっと良い案があれば修正お願いします！
+    File.open(@file_name, "w", 0755) do |f|
+      f.print(binary_codes.join("\n"))
+    end
+  end
+end
+
+class Parser
+  def initialize(path)
+    @lines = File.open(path, "r").readlines
+    @index = 0
+  end
+
+  def has_more_lines?
+    # 5行あるとして、@indexは0~4まで
+    @lines.length > @index + 1
+    # !@lines[@index].nil?
+  end
+
+  def advance
+    # ループを回して空行、コメントじゃない行を探す
+    while has_more_lines?
+      @index += 1
+      is_comment = current_line.start_with?('//')
+      is_blank = current_line.empty? # 仮
+      break if !is_comment && !is_blank
+    end
+  end
+
+  def instruction_type
+    if current_line.start_with?('@')
+      :a_instruction
+    elsif current_line.start_with?('(') && current_line.end_with?(')')
+      :l_instruction
+    else
+      :c_instruction
+    end
+  end
+
+  def symbol
+    if instruction_type == :a_instruction
+      current_line[1..]
+    elsif instruction_type == :l_instruction
+      current_line.delete_prefix("(").delete_suffix(")")
+    end
+  end
+
+  def dest
+    # 一般形: dest=comp;jump
+    # D=D-M ←destがD, compがD-M, jumpはない
+    # D;JGT ←destはない, compがD, jumpがJGT
+    current_line[/^(.*?)=/, 1] || 'null'
+  end
+
+  def comp
+    current_line.gsub(/^.*=/, '').gsub(/;.*$/, '')
+    # current_line.split("=").last.split(";").first
+  end
+
+  def jump
+    current_line[/;(.*?)$/, 1] || 'null'
+  end
+
+  def reset
+    @index = 0
+  end
+
+  private
+
+  def current_line
+    @lines[@index].split('//')[0].strip
+  end
+end
+
+class Code
+  def dest(mnemonic)
+    result = 0
+    result |= 1 if mnemonic.include?("M")
+    result |= 2 if mnemonic.include?("D")
+    result |= 4 if mnemonic.include?("A")
+    result.to_s(2).rjust(3, '0')
+  end
+
+  def comp(mnemonic)
+    a = mnemonic.include?('M') ? '1' : '0'
+    cccccc = case mnemonic
+    when '0' then '101010'
+    when '1' then '111111'
+    when '-1' then '111010'
+    when 'D' then '001100'
+    when 'A', 'M' then '110000'
+    when '!D' then '001101'
+    when '!A', '!M' then '110001'
+    when '-D' then '001111'
+    when '-A', '-M' then '110011'
+    when 'D+1' then '011111'
+    when 'A+1', 'M+1' then '110111'
+    when 'D-1' then '001110'
+    when 'A-1', 'M-1' then '110010'
+    when 'D+A', 'D+M' then '000010'
+    when 'D-A', 'D-M' then '010011'
+    when 'A-D', 'M-D' then '000111'
+    when 'D&A', 'D&M' then '000000'
+    when 'D|A', 'D|M' then '010101'
+    end
+    "#{a}#{cccccc}"
+  end
+
+  def jump(mnemonic)
+    case mnemonic
+    when 'JGT' then '001'
+    when 'JEQ' then '010'
+    when 'JGE' then '011'
+    when 'JLT' then '100'
+    when 'JNE' then '101'
+    when 'JLE' then '110'
+    when 'JMP' then '111'
+    when 'null' then '000'
+    end
+  end
+end
+
+class SymbolTable
+  def initialize
+    @table = {
+      'R0' => 0,
+      'R1' => 1,
+      'R2' => 2,
+      'R3' => 3,
+      'R4' => 4,
+      'R5' => 5,
+      'R6' => 6,
+      'R7' => 7,
+      'R8' => 8,
+      'R9' => 9,
+      'R10' => 10,
+      'R11' => 11,
+      'R12' => 12,
+      'R13' => 13,
+      'R14' => 14,
+      'R15' => 15,
+      'SP' => 0,
+      'LCL' => 1,
+      'ARG' => 2,
+      'THIS' => 3,
+      'THAT' => 4,
+      'SCREEN' => 16384,
+      'KBD' => 24576
+    }
+  end
+
+  def add_entry(symbol, address)
+    @table[symbol] = address
+  end
+
+  def contains?(symbol)
+    @table.key?(symbol)
+  end
+
+  def get_address(symbol)
+    @table[symbol]
+  end
+end
+
+if __FILE__ == $PROGRAM_NAME
+  HackAssembler.new(ARGV[0]).execute
+end
