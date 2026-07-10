@@ -55,9 +55,11 @@ class Parser
   end
 
   def command_type
-    if current_line.start_with?('push')
+    tmp = current_line.split[0]
+    case tmp
+    when 'push'
       :c_push
-    elsif current_line.start_with?('add')
+    when 'add'
       :c_arithmetic
     end
   end
