@@ -59,7 +59,7 @@ class Parser
     case tmp
     when 'push'
       :c_push
-    when 'add'
+    when 'add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not'
       :c_arithmetic
     end
   end
@@ -96,6 +96,7 @@ class CodeWriter
   def initialize(file_name)
     @file_name = file_name
     @file = File.open(@file_name, "w", 0755)
+    @increment_count = 0
     # asm = <<~ASM
     #   @256
     #   D=A
@@ -107,6 +108,10 @@ class CodeWriter
 
   def close
     asm = <<~ASM
+      (TRUE)
+      M=-1
+      @INCREMENT
+      0;JMP
       (END)
       @END
       0;JMP
@@ -116,15 +121,12 @@ class CodeWriter
   end
 
   def write_arithmetic(command)
-    asm = <<~ASM
-      @SP
-      A=M-1
-      D=M
-      A=A-1
-      M=D+M
-      @SP
-      M=M-1
-    ASM
+    case command
+    when 'neg', 'not'
+      asm = generate_unary_arithmetic(command)
+    else
+      asm = generate_binary_arithmetic(command)
+    end
     @file.print(asm)
   end
 
@@ -139,6 +141,51 @@ class CodeWriter
       M=M+1
     ASM
     @file.print(asm)
+  end
+
+  private
+
+  def generate_arithmetic_asm(command)
+    arithmetic_asm = {
+      'add' => ['M=D+M', "@INCREMENT#{@increment_count}", '0;JMP'],
+      'sub' => ['M=M-D', "@INCREMENT#{@increment_count}", '0;JMP'],
+      'neg' => ['M=-M',  "@INCREMENT#{@increment_count}", '0;JMP'],
+      'and' => ['M=D&M', "@INCREMENT#{@increment_count}", '0;JMP'],
+      'or'  => ['M=D|M', "@INCREMENT#{@increment_count}", '0;JMP'],
+      'not' => ['M=!M',  "@INCREMENT#{@increment_count}", '0;JMP'],
+      'eq'  => ['D=M-D', '@TRUE', 'D;JEQ', 'M=0', "@INCREMENT#{@increment_count}", '0;JMP'],
+      'gt'  => ['D=M-D', '@TRUE', 'D;JGT', 'M=0', "@INCREMENT#{@increment_count}", '0;JMP'],
+      'lt'  => ['D=M-D', '@TRUE', 'D;JLT', 'M=0', "@INCREMENT#{@increment_count}", '0;JMP'],
+    }
+    arithmetic_asm[command]
+  end
+
+  def generate_unary_arithmetic(command)
+    @increment_count+=1
+    tmp = generate_arithmetic_asm(command).join("\n")
+    asm = <<~ASM
+      @SP
+      A=M-1
+      #{tmp}
+      (INCREMENT#{@increment_count})
+      @SP
+      M=M-1
+    ASM
+  end
+
+  def generate_binary_arithmetic(command)
+    @increment_count+=1
+    tmp = generate_arithmetic_asm(command).join("\n")
+    asm = <<~ASM
+      @SP
+      A=M-1
+      D=M
+      A=A-1
+      #{tmp}
+      (INCREMENT#{@increment_count})
+      @SP
+      M=M-1
+    ASM
   end
 end
 
