@@ -163,6 +163,7 @@ class CodeWriter
   def generate_unary_arithmetic(command)
     @increment_count+=1
     tmp = generate_arithmetic_asm(command).join("\n")
+    # TODO: アセンブリコードにバグあり（単項演算の場合、演算の実行前後でスタックポインタは変化しない）
     asm = <<~ASM
       @SP
       A=M-1
