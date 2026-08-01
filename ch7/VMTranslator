@@ -108,10 +108,6 @@ class CodeWriter
 
   def close
     asm = <<~ASM
-      (TRUE)
-      M=-1
-      @INCREMENT
-      0;JMP
       (END)
       @END
       0;JMP
@@ -124,8 +120,10 @@ class CodeWriter
     case command
     when 'neg', 'not'
       asm = generate_unary_arithmetic(command)
-    else
+    when 'add', 'sub', 'and', 'or'
       asm = generate_binary_arithmetic(command)
+    when 'eq', 'gt', 'lt'
+      asm = generate_comparison(command)
     end
     @file.print(asm)
   end
@@ -147,43 +145,62 @@ class CodeWriter
 
   def generate_arithmetic_asm(command)
     arithmetic_asm = {
-      'add' => ['M=D+M', "@INCREMENT#{@increment_count}", '0;JMP'],
-      'sub' => ['M=M-D', "@INCREMENT#{@increment_count}", '0;JMP'],
-      'neg' => ['M=-M',  "@INCREMENT#{@increment_count}", '0;JMP'],
-      'and' => ['M=D&M', "@INCREMENT#{@increment_count}", '0;JMP'],
-      'or'  => ['M=D|M', "@INCREMENT#{@increment_count}", '0;JMP'],
-      'not' => ['M=!M',  "@INCREMENT#{@increment_count}", '0;JMP'],
-      'eq'  => ['D=M-D', '@TRUE', 'D;JEQ', 'M=0', "@INCREMENT#{@increment_count}", '0;JMP'],
-      'gt'  => ['D=M-D', '@TRUE', 'D;JGT', 'M=0', "@INCREMENT#{@increment_count}", '0;JMP'],
-      'lt'  => ['D=M-D', '@TRUE', 'D;JLT', 'M=0', "@INCREMENT#{@increment_count}", '0;JMP'],
+      'add' => 'M=D+M',
+      'sub' => 'M=M-D',
+      'neg' => 'M=-M',
+      'and' => 'M=D&M',
+      'or'  => 'M=D|M',
+      'not' => 'M=!M',
+      'eq'  => 'D;JEQ',
+      'gt'  => 'D;JGT',
+      'lt'  => 'D;JLT',
     }
     arithmetic_asm[command]
   end
 
   def generate_unary_arithmetic(command)
-    @increment_count+=1
-    tmp = generate_arithmetic_asm(command).join("\n")
-    # TODO: アセンブリコードにバグあり（単項演算の場合、演算の実行前後でスタックポインタは変化しない）
+    tmp = generate_arithmetic_asm(command)
     asm = <<~ASM
       @SP
       A=M-1
       #{tmp}
-      (INCREMENT#{@increment_count})
-      @SP
-      M=M-1
     ASM
   end
 
   def generate_binary_arithmetic(command)
-    @increment_count+=1
-    tmp = generate_arithmetic_asm(command).join("\n")
+    tmp = generate_arithmetic_asm(command)
     asm = <<~ASM
       @SP
       A=M-1
       D=M
       A=A-1
       #{tmp}
-      (INCREMENT#{@increment_count})
+      @SP
+      M=M-1
+    ASM
+  end
+
+   def generate_comparison(command)
+    @increment_count+=1
+    tmp = generate_arithmetic_asm(command)
+    asm = <<~ASM
+      @SP
+      A=M-1
+      D=M
+      A=A-1
+      D=M-D
+      @COMPARISON_TRUE#{@increment_count}
+      #{tmp}
+      D=0
+      @COMPARISON_END#{@increment_count}
+      0;JMP
+      (COMPARISON_TRUE#{@increment_count})
+      D=-1
+      (COMPARISON_END#{@increment_count})
+      @SP
+      A=M-1
+      A=A-1
+      M=D
       @SP
       M=M-1
     ASM
