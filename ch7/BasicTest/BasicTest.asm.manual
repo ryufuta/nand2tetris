@@ -31,6 +31,7 @@ M=D
 A=M-1
 D=M
 @R13
+A=M // ryu さん追加
 M=D
 @SP
 M=M-1
