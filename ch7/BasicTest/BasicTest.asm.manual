@@ -1,4 +1,5 @@
 // push constant 10
+  // RAM[SP++]=D
 @10
 D=A
 @SP
