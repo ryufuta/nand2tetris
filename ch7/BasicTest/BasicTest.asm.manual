@@ -9,13 +9,11 @@ M=M+1
 
 // pop local 0
 @SP
-A=M-1
+AM=M-1
 D=M
 @LCL
 A=M
 M=D
-@SP
-M=M-1
 
 // pop argument 2
   // D=RAM[--SP]
