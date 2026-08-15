@@ -32,3 +32,56 @@ D=M
 @R13
 A=M // ryu さん追加
 M=D
+
+// pop temp 6
+  // D=RAM[--SP]
+  // RAM[5+6]=D
+@SP
+AM=M-1
+D=M
+@R11
+M=D
+
+// push local 0
+  // D=RAM[LCL]
+  // RAM[SP++]=D
+@LCL
+A=M
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+
+// push that 5
+  // D=RAM[THAT+5]
+  // RAM[SP++]=D
+@THAT
+D=M
+@5
+A=D+A
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+
+// add
+@SP
+AM=M-1
+D=M
+A=A-1
+M=D+M
+
+// push temp 6
+  // D=RAM[5+6]
+  // RAM[SP++]=D
+@R11
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
