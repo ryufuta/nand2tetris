@@ -195,8 +195,7 @@ class CodeWriter
       D=-1
       (COMPARISON_END#{@increment_count})
       @SP
-      A=M
-      A=A-1
+      A=M-1
       M=D
     ASM
   end
