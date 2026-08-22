@@ -133,10 +133,9 @@ class CodeWriter
       @#{index}
       D=A
       @SP
-      A=M
+      AM=M+1
+      A=A-1
       M=D
-      @SP
-      M=M+1
     ASM
     @file.print(asm)
   end
@@ -171,12 +170,10 @@ class CodeWriter
     tmp = generate_arithmetic_asm(command)
     asm = <<~ASM
       @SP
-      A=M-1
+      AM=M-1
       D=M
       A=A-1
       #{tmp}
-      @SP
-      M=M-1
     ASM
   end
 
