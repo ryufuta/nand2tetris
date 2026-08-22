@@ -93,6 +93,18 @@ class Parser
 end
 
 class CodeWriter
+  ARITHMETIC_ASM = {
+    'add' => 'M=D+M',
+    'sub' => 'M=M-D',
+    'neg' => 'M=-M',
+    'and' => 'M=D&M',
+    'or'  => 'M=D|M',
+    'not' => 'M=!M',
+    'eq'  => 'D;JEQ',
+    'gt'  => 'D;JGT',
+    'lt'  => 'D;JLT',
+  }
+
   def initialize(file_name)
     @file_name = file_name
     @file = File.open(@file_name, "w", 0755)
@@ -142,44 +154,26 @@ class CodeWriter
 
   private
 
-  def generate_arithmetic_asm(command)
-    arithmetic_asm = {
-      'add' => 'M=D+M',
-      'sub' => 'M=M-D',
-      'neg' => 'M=-M',
-      'and' => 'M=D&M',
-      'or'  => 'M=D|M',
-      'not' => 'M=!M',
-      'eq'  => 'D;JEQ',
-      'gt'  => 'D;JGT',
-      'lt'  => 'D;JLT',
-    }
-    arithmetic_asm[command]
-  end
-
   def generate_unary_arithmetic(command)
-    tmp = generate_arithmetic_asm(command)
     asm = <<~ASM
       @SP
       A=M-1
-      #{tmp}
+      #{ARITHMETIC_ASM[command]}
     ASM
   end
 
   def generate_binary_arithmetic(command)
-    tmp = generate_arithmetic_asm(command)
     asm = <<~ASM
       @SP
       AM=M-1
       D=M
       A=A-1
-      #{tmp}
+      #{ARITHMETIC_ASM[command]}
     ASM
   end
 
    def generate_comparison(command)
     @increment_count+=1
-    tmp = generate_arithmetic_asm(command)
     asm = <<~ASM
       @SP
       AM=M-1
@@ -187,7 +181,7 @@ class CodeWriter
       A=A-1
       D=M-D
       @COMPARISON_TRUE#{@increment_count}
-      #{tmp}
+      #{ARITHMETIC_ASM[command]}
       D=0
       @COMPARISON_END#{@increment_count}
       0;JMP
