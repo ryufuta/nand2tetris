@@ -33,6 +33,21 @@ D=M
 A=M // ryu さん追加
 M=D
 
+// pop argument 2 (SP の操作を先にやる)
+@SP
+AM=M-1
+D=M
+@R13
+A=M
+M=D
+@ARG
+D=M
+@2
+D=D+A
+@R13
+A=M
+M=D
+
 // pop temp 6
   // D=RAM[--SP]
   // RAM[5+6]=D
