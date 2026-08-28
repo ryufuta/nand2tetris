@@ -20,13 +20,14 @@ class VMTranslator
         # arg1 = :add
         command = @parser.arg1
         @code_writer.write_arithmetic(command)
-      in :c_push
+      in :c_push | :c_pop
         # push constant 1
         # arg1 = :constant
         # arg2 = 1
+        command = @parser.command_type
         segment = @parser.arg1
         index = @parser.arg2
-        @code_writer.write_push_pop(:push, segment, index)
+        @code_writer.write_push_pop(command, segment, index)
       end
     end
     @code_writer.close
@@ -141,6 +142,21 @@ class CodeWriter
   end
 
   def write_push_pop(command, segment, index)
+    case command
+    when :c_push
+      case segment
+      when 'constant'
+        asm = generate_push_constant(index)
+      end
+    when :c_pop
+      # TODO
+    end
+    @file.print(asm)
+  end
+
+  private
+
+  def generate_push_constant(index)
     asm = <<~ASM
       @#{index}
       D=A
@@ -149,10 +165,7 @@ class CodeWriter
       A=A-1
       M=D
     ASM
-    @file.print(asm)
   end
-
-  private
 
   def generate_unary_arithmetic(command)
     asm = <<~ASM
