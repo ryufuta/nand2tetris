@@ -106,14 +106,14 @@ class CodeWriter
     'eq'  => 'D;JEQ',
     'gt'  => 'D;JGT',
     'lt'  => 'D;JLT',
-  }
+  }.freeze
 
   SEGMENT_ASM = {
     'local' => 'LCL',
     'argument' => 'ARG',
     'this' => 'THIS',
     'that' => 'THAT',
-  }
+  }.freeze
 
   PUSH_D_ONTO_STACK_ASM = <<~ASM.chomp
     @SP
