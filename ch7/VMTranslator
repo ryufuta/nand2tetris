@@ -91,7 +91,7 @@ class Parser
   private
 
   def current_line
-    @lines[@index].strip
+    @lines[@index].split('//')[0].strip
   end
 end
 
