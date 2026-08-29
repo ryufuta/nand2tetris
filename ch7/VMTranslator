@@ -60,6 +60,8 @@ class Parser
     case tmp
     when 'push'
       :c_push
+    when 'pop'
+      :c_pop
     when 'add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not'
       :c_arithmetic
     end
@@ -83,7 +85,7 @@ class Parser
     # push constant 1
     # => 1
     args = current_line.split
-    args[2]
+    args[2].to_i
   end
 
   private
@@ -104,6 +106,12 @@ class CodeWriter
     'eq'  => 'D;JEQ',
     'gt'  => 'D;JGT',
     'lt'  => 'D;JLT',
+  }
+  SEGMENT_ASM = {
+    'local' => 'LCL',
+    'argument' => 'ARG',
+    'this' => 'THIS',
+    'that' => 'THAT',
   }
 
   def initialize(file_name)
@@ -147,9 +155,18 @@ class CodeWriter
       case segment
       when 'constant'
         asm = generate_push_constant(index)
+      when 'local', 'argument', 'this', 'that'
+        asm = generate_push_multimemory(segment, index)
+      when 'temp'
+        asm = generate_push_temp(index)
       end
     when :c_pop
-      # TODO
+      case segment
+      when 'local', 'argument', 'this', 'that'
+        asm = generate_pop_multimemory(segment, index)
+      when 'temp'
+        asm = generate_pop_temp(index)
+      end
     end
     @file.print(asm)
   end
@@ -163,6 +180,58 @@ class CodeWriter
       @SP
       AM=M+1
       A=A-1
+      M=D
+    ASM
+  end
+
+  def generate_push_multimemory(segment, index)
+    asm = <<~ASM
+      @#{index}
+      D=A
+      @#{SEGMENT_ASM[segment]}
+      A=D+M
+      D=M
+      @SP
+      AM=M+1
+      A=A-1
+      M=D
+    ASM
+  end
+
+  def generate_push_temp(index)
+    asm = <<~ASM
+      @R#{5 + index}
+      D=M
+      @SP
+      AM=M+1
+      A=A-1
+      M=D
+    ASM
+  end
+
+  def generate_pop_multimemory(segment, index)
+    asm = <<~ASM
+      @#{index}
+      D=A
+      @#{SEGMENT_ASM[segment]}
+      D=D+M
+      @R13
+      M=D
+      @SP
+      AM=M-1
+      D=M
+      @R13
+      A=M
+      M=D
+    ASM
+  end
+
+  def generate_pop_temp(index)
+    asm = <<~ASM
+      @SP
+      AM=M-1
+      D=M
+      @R#{5 + index}
       M=D
     ASM
   end
