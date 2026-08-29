@@ -113,6 +113,17 @@ class CodeWriter
     'this' => 'THIS',
     'that' => 'THAT',
   }
+  PUSH_D_ONTO_STACK_ASM = <<~ASM.chomp
+    @SP
+    AM=M+1
+    A=A-1
+    M=D
+  ASM
+  POP_FROM_STACK_TO_D_ASM = <<~ASM.chomp
+    @SP
+    AM=M-1
+    D=M
+  ASM
 
   def initialize(file_name)
     @file_name = file_name
@@ -177,10 +188,7 @@ class CodeWriter
     asm = <<~ASM
       @#{index}
       D=A
-      @SP
-      AM=M+1
-      A=A-1
-      M=D
+      #{PUSH_D_ONTO_STACK_ASM}
     ASM
   end
 
@@ -191,10 +199,7 @@ class CodeWriter
       @#{SEGMENT_ASM[segment]}
       A=D+M
       D=M
-      @SP
-      AM=M+1
-      A=A-1
-      M=D
+      #{PUSH_D_ONTO_STACK_ASM}
     ASM
   end
 
@@ -202,10 +207,7 @@ class CodeWriter
     asm = <<~ASM
       @R#{5 + index}
       D=M
-      @SP
-      AM=M+1
-      A=A-1
-      M=D
+      #{PUSH_D_ONTO_STACK_ASM}
     ASM
   end
 
@@ -217,9 +219,7 @@ class CodeWriter
       D=D+M
       @R13
       M=D
-      @SP
-      AM=M-1
-      D=M
+      #{POP_FROM_STACK_TO_D_ASM}
       @R13
       A=M
       M=D
@@ -228,9 +228,7 @@ class CodeWriter
 
   def generate_pop_temp(index)
     asm = <<~ASM
-      @SP
-      AM=M-1
-      D=M
+      #{POP_FROM_STACK_TO_D_ASM}
       @R#{5 + index}
       M=D
     ASM
@@ -246,9 +244,7 @@ class CodeWriter
 
   def generate_binary_arithmetic(command)
     asm = <<~ASM
-      @SP
-      AM=M-1
-      D=M
+      #{POP_FROM_STACK_TO_D_ASM}
       A=A-1
       #{ARITHMETIC_ASM[command]}
     ASM
@@ -257,9 +253,7 @@ class CodeWriter
    def generate_comparison(command)
     @increment_count+=1
     asm = <<~ASM
-      @SP
-      AM=M-1
-      D=M
+      #{POP_FROM_STACK_TO_D_ASM}
       A=A-1
       D=M-D
       @COMPARISON_TRUE#{@increment_count}
