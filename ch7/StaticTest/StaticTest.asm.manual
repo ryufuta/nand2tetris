@@ -1,0 +1,14 @@
+// pop static 8
+@SP
+AM=M-1
+D=M
+@StaticTest.8
+M=D
+
+// push static 3
+@StaticTest.3
+D=M
+@SP
+AM=M+1
+A=A-1
+M=D

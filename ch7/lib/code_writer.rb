@@ -80,6 +80,8 @@ class CodeWriter
         asm = generate_push_temp(index)
       when 'pointer'
         asm = generate_push_pointer(index)
+      when 'static'
+        asm = generate_push_static(index)
       end
     when :c_pop
       case segment
@@ -89,6 +91,8 @@ class CodeWriter
         asm = generate_pop_temp(index)
       when 'pointer'
         asm = generate_pop_pointer(index)
+      when 'static'
+        asm = generate_pop_static(index)
       end
     end
     @file.print(asm)
@@ -131,6 +135,14 @@ class CodeWriter
     ASM
   end
 
+  def generate_push_static(index)
+    <<~ASM
+      @#{File.basename(@file.path, '.asm')}.#{index}
+      D=M
+      #{PUSH_D_ONTO_STACK_ASM}
+    ASM
+  end
+
   def generate_pop_multimemory(segment, index)
     <<~ASM
       @#{index}
@@ -158,6 +170,14 @@ class CodeWriter
     <<~ASM
       #{POP_FROM_STACK_TO_D_ASM}
       @#{index == 0 ? 'THIS' : 'THAT'}
+      M=D
+    ASM
+  end
+
+  def generate_pop_static(index)
+    <<~ASM
+      #{POP_FROM_STACK_TO_D_ASM}
+      @#{File.basename(@file.path, '.asm')}.#{index}
       M=D
     ASM
   end
