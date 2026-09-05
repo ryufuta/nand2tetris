@@ -192,7 +192,7 @@ class CodeWriter
   private
 
   def generate_push_constant(index)
-    asm = <<~ASM
+    <<~ASM
       @#{index}
       D=A
       #{PUSH_D_ONTO_STACK_ASM}
@@ -200,7 +200,7 @@ class CodeWriter
   end
 
   def generate_push_multimemory(segment, index)
-    asm = <<~ASM
+    <<~ASM
       @#{index}
       D=A
       @#{SEGMENT_ASM[segment]}
@@ -211,7 +211,7 @@ class CodeWriter
   end
 
   def generate_push_temp(index)
-    asm = <<~ASM
+    <<~ASM
       @R#{5 + index}
       D=M
       #{PUSH_D_ONTO_STACK_ASM}
@@ -219,7 +219,7 @@ class CodeWriter
   end
 
   def generate_push_pointer(index)
-    asm = <<~ASM
+    <<~ASM
       @#{index == 0 ? 'THIS' : 'THAT'}
       D=M
       #{PUSH_D_ONTO_STACK_ASM}
@@ -227,7 +227,7 @@ class CodeWriter
   end
 
   def generate_pop_multimemory(segment, index)
-    asm = <<~ASM
+    <<~ASM
       @#{index}
       D=A
       @#{SEGMENT_ASM[segment]}
@@ -242,7 +242,7 @@ class CodeWriter
   end
 
   def generate_pop_temp(index)
-    asm = <<~ASM
+    <<~ASM
       #{POP_FROM_STACK_TO_D_ASM}
       @R#{5 + index}
       M=D
@@ -250,7 +250,7 @@ class CodeWriter
   end
 
   def generate_pop_pointer(index)
-    asm = <<~ASM
+    <<~ASM
       #{POP_FROM_STACK_TO_D_ASM}
       @#{index == 0 ? 'THIS' : 'THAT'}
       M=D
@@ -258,7 +258,7 @@ class CodeWriter
   end
 
   def generate_unary_arithmetic(command)
-    asm = <<~ASM
+    <<~ASM
       @SP
       A=M-1
       #{ARITHMETIC_ASM[command]}
@@ -266,7 +266,7 @@ class CodeWriter
   end
 
   def generate_binary_arithmetic(command)
-    asm = <<~ASM
+    <<~ASM
       #{POP_FROM_STACK_TO_D_ASM}
       A=A-1
       #{ARITHMETIC_ASM[command]}
@@ -275,7 +275,7 @@ class CodeWriter
 
    def generate_comparison(command)
     @increment_count+=1
-    asm = <<~ASM
+    <<~ASM
       #{POP_FROM_STACK_TO_D_ASM}
       A=A-1
       D=M-D
