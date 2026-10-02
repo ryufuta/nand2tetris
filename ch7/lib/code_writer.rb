@@ -197,7 +197,7 @@ class CodeWriter
     ASM
   end
 
-   def generate_comparison(command)
+  def generate_comparison(command)
     @increment_count+=1
     <<~ASM
       #{POP_FROM_STACK_TO_D_ASM}
