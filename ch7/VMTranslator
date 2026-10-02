@@ -10,8 +10,8 @@ require_relative 'lib/parser'
 class VMTranslator
   def initialize(path)
     @parser = Parser.new(path)
-    @file_name = path.sub(/\.vm$/, '.asm') # 出力するファイル名を取得
-    @code_writer = CodeWriter.new(@file_name)
+    file_name = path.sub(/\.vm$/, '.asm') # 出力するファイル名を取得
+    @code_writer = CodeWriter.new(file_name)
   end
 
   def execute

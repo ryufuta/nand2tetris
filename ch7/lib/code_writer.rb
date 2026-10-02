@@ -34,8 +34,7 @@ class CodeWriter
   ASM
 
   def initialize(file_name)
-    @file_name = file_name
-    @file = File.open(@file_name, "w", 0755)
+    @file = File.open(file_name, "w", 0755)
     @increment_count = 0
     # asm = <<~ASM
     #   @256
