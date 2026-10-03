@@ -34,6 +34,8 @@ class Parser
       :c_label
     when 'if-goto'
       :c_if
+    when 'goto'
+      :c_goto
     end
   end
 

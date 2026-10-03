@@ -37,6 +37,9 @@ class VMTranslator
       in :c_if
         label = @parser.arg1
         @code_writer.write_if(label)
+      in :c_goto
+        label = @parser.arg1
+        @code_writer.write_goto(label)
       end
     end
     @code_writer.close

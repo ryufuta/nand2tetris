@@ -113,6 +113,14 @@ class CodeWriter
     @file.print(asm)
   end
 
+  def write_goto(label)
+    asm = <<~ASM
+      @#{label}
+      0;JMP
+    ASM
+    @file.print(asm)
+  end
+
   private
 
   def generate_push_constant(index)
