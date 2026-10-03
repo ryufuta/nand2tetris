@@ -31,6 +31,12 @@ class VMTranslator
         segment = @parser.arg1
         index = @parser.arg2
         @code_writer.write_push_pop(command, segment, index)
+      in :c_label
+        label = @parser.arg1
+        @code_writer.write_label(label)
+      in :c_if
+        label = @parser.arg1
+        @code_writer.write_if(label)
       end
     end
     @code_writer.close

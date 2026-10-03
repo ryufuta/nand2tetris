@@ -30,6 +30,10 @@ class Parser
       :c_pop
     when 'add', 'sub', 'neg', 'eq', 'gt', 'lt', 'and', 'or', 'not'
       :c_arithmetic
+    when 'label'
+      :c_label
+    when 'if-goto'
+      :c_if
     end
   end
 

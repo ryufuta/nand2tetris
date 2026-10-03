@@ -97,6 +97,22 @@ class CodeWriter
     @file.print(asm)
   end
 
+  def write_label(label)
+    asm = <<~ASM
+      (#{label})
+    ASM
+    @file.print(asm)
+  end
+
+  def write_if(label)
+    asm = <<~ASM
+      #{POP_FROM_STACK_TO_D_ASM}
+      @#{label}
+      D;JNE
+    ASM
+    @file.print(asm)
+  end
+
   private
 
   def generate_push_constant(index)
