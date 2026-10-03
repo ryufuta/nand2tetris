@@ -2,7 +2,7 @@
 
 class Parser
   def initialize(path)
-    @lines = File.open(path, "r").readlines
+    @lines = File.open(path, 'r').readlines
     @index = -1
   end
 
@@ -40,9 +40,8 @@ class Parser
     # 2
     # add
     # => add
-    if (command_type == :c_arithmetic)
-      return current_line
-    end
+    return current_line if command_type == :c_arithmetic
+
     args = current_line.split
     args[1]
   end

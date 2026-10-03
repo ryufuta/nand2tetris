@@ -6,18 +6,18 @@ class CodeWriter
     'sub' => 'M=M-D',
     'neg' => 'M=-M',
     'and' => 'M=D&M',
-    'or'  => 'M=D|M',
+    'or' => 'M=D|M',
     'not' => 'M=!M',
-    'eq'  => 'D;JEQ',
-    'gt'  => 'D;JGT',
-    'lt'  => 'D;JLT',
+    'eq' => 'D;JEQ',
+    'gt' => 'D;JGT',
+    'lt' => 'D;JLT'
   }.freeze
 
   SEGMENT_ASM = {
     'local' => 'LCL',
     'argument' => 'ARG',
     'this' => 'THIS',
-    'that' => 'THAT',
+    'that' => 'THAT'
   }.freeze
 
   PUSH_D_ONTO_STACK_ASM = <<~ASM.chomp
@@ -34,7 +34,7 @@ class CodeWriter
   ASM
 
   def initialize(file_name)
-    @file = File.open(file_name, "w", 0755)
+    @file = File.open(file_name, 'w', 0o755)
     @increment_count = 0
     # asm = <<~ASM
     #   @256
@@ -198,7 +198,7 @@ class CodeWriter
   end
 
   def generate_comparison(command)
-    @increment_count+=1
+    @increment_count += 1
     <<~ASM
       #{POP_FROM_STACK_TO_D_ASM}
       A=A-1

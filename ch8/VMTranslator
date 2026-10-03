@@ -37,6 +37,4 @@ class VMTranslator
   end
 end
 
-if __FILE__ == $PROGRAM_NAME
-  VMTranslator.new(ARGV[0]).execute
-end
+VMTranslator.new(ARGV[0]).execute if __FILE__ == $PROGRAM_NAME
