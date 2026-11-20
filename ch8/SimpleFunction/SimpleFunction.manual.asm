@@ -42,7 +42,8 @@ M=D
 @5
 D=A
 @R13
-D=M-D // frame-5
+A=M-D // frame-5
+D=M // *(frame-5)
 @R14
 M=D
 // *ARG = pop()
