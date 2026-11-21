@@ -1,6 +1,8 @@
 (SimpleFunction.test)
 @LCL
 A=M
+A=A-1
+A=A+1
 M=0
 A=A+1
 M=0
@@ -70,7 +72,8 @@ M=D
 @5
 D=A
 @R13
-D=M-D // frame-5
+A=M-D // frame-5
+D=M // *(frame-5)
 @R14
 M=D
 // *ARG = pop()
@@ -87,8 +90,8 @@ D=M+1
 M=D
 // THAT = *(frame-1)
 @R13
-AM=M-1
-D=M
+AM=M-1 // 316
+D=M // Dに316番地の値が入る
 @THAT
 M=D
 // THIS = *(frame-2)

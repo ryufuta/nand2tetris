@@ -36,6 +36,10 @@ class Parser
       :c_if
     when 'goto'
       :c_goto
+    when 'function'
+      :c_function
+    when 'return'
+      :c_return
     end
   end
 

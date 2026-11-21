@@ -40,6 +40,12 @@ class VMTranslator
       in :c_goto
         label = @parser.arg1
         @code_writer.write_goto(label)
+      in :c_function
+        function_name = @parser.arg1
+        n_vars = @parser.arg2
+        @code_writer.write_function(function_name, n_vars)
+      in :c_return
+        @code_writer.write_return
       end
     end
     @code_writer.close

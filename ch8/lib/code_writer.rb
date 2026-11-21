@@ -121,6 +121,85 @@ class CodeWriter
     @file.print(asm)
   end
 
+  def write_function(function_name, n_vars)
+    asm = <<~ASM
+      (#{function_name})
+      @LCL
+      A=M
+      A=A-1
+    ASM
+    loop = <<~LOOP
+      A=A+1
+      M=0
+    LOOP
+    n_vars.times do |_i|
+      asm += loop
+    end
+    @file.print(asm)
+  end
+
+  def write_return
+    asm = <<~ASM
+      // return
+      // frame = LCL
+      // R13にLCLを退避
+      @LCL
+      D=M
+      @R13
+      M=D
+      // retAddr = *(frame-5)
+      // R14にretAddrを退避
+      @5
+      D=A
+      @R13
+      A=M-D // frame-5
+      D=M // *(frame-5)
+      @R14
+      M=D
+      // *ARG = pop()
+      @SP
+      A=M-1
+      D=M
+      @ARG
+      A=M
+      M=D
+      // SP = ARG+1
+      @ARG
+      D=M+1
+      @SP
+      M=D
+      // THAT = *(frame-1)
+      @R13
+      AM=M-1 // 316
+      D=M // Dに316番地の値が入る
+      @THAT
+      M=D
+      // THIS = *(frame-2)
+      @R13
+      AM=M-1
+      D=M
+      @THIS
+      M=D
+      // ARG = *(frame-3)
+      @R13
+      AM=M-1
+      D=M
+      @ARG
+      M=D
+      // LCL = *(frame-4)
+      @R13
+      AM=M-1
+      D=M
+      @LCL
+      M=D
+      // goto retAddr
+      @R14
+      A=M
+      0;JMP
+    ASM
+    @file.print(asm)
+  end
+
   private
 
   def generate_push_constant(index)
