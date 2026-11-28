@@ -40,6 +40,8 @@ class Parser
       :c_function
     when 'return'
       :c_return
+    when 'call'
+      :c_call
     end
   end
 

@@ -9,46 +9,62 @@ require_relative 'lib/parser'
 
 class VMTranslator
   def initialize(path)
+    # parserの配列を作る
+    # pathのなかから.vmファイルをとりだす
+
     @parser = Parser.new(path)
     file_name = path.sub(/\.vm$/, '.asm') # 出力するファイル名を取得
     @code_writer = CodeWriter.new(file_name)
   end
 
   def execute
-    while @parser.has_more_lines?
-      @parser.advance
-      case @parser.command_type
+    # parserの配列でループをまわす？
+    @parsers.each do |parser|
+      execute_parser(parser)
+    end
+    @code_writer.close
+  end
+
+  private
+
+  def execute_parser(parser)
+    while parser.has_more_lines?
+      parser.advance
+      case parser.command_type
       in :c_arithmetic
         # add
         # arg1 = :add
-        command = @parser.arg1
+        command = parser.arg1
         @code_writer.write_arithmetic(command)
       in :c_push | :c_pop
         # push constant 1
         # arg1 = :constant
         # arg2 = 1
-        command = @parser.command_type
-        segment = @parser.arg1
-        index = @parser.arg2
+        command = parser.command_type
+        segment = parser.arg1
+        index = parser.arg2
         @code_writer.write_push_pop(command, segment, index)
       in :c_label
-        label = @parser.arg1
+        label = parser.arg1
         @code_writer.write_label(label)
       in :c_if
-        label = @parser.arg1
+        label = parser.arg1
         @code_writer.write_if(label)
       in :c_goto
-        label = @parser.arg1
+        label = parser.arg1
         @code_writer.write_goto(label)
       in :c_function
-        function_name = @parser.arg1
-        n_vars = @parser.arg2
+        function_name = parser.arg1
+        n_vars = parser.arg2
         @code_writer.write_function(function_name, n_vars)
       in :c_return
         @code_writer.write_return
+      in :c_call
+        function_name = parser.arg1
+        n_args = parser.arg2
+        @code_writer.write_call(function_name, n_args)
       end
     end
-    @code_writer.close
   end
 end
 

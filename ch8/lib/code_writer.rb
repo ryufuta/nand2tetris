@@ -45,6 +45,8 @@ class CodeWriter
     # @file.print(asm)
   end
 
+  def set_file_name(file_name); end
+
   def close
     asm = <<~ASM
       (END)
@@ -196,6 +198,64 @@ class CodeWriter
       @R14
       A=M
       0;JMP
+    ASM
+    @file.print(asm)
+  end
+
+  def write_call(_function_name, _n_args)
+    asm = <<~ASM
+      // push returnAddress
+      @$ret.0 // 呼び出す側の関数名が必要
+      D=A
+      @SP
+      AM=M+1
+      A=A-1
+      M=D
+      // push LCL
+      @LCL
+      D=M
+      @SP
+      AM=M+1
+      A=A-1
+      M=D
+      // push ARG
+      @ARG
+      D=M
+      @SP
+      AM=M+1
+      A=A-1
+      M=D
+      // push THIS
+      @THIS
+      D=M
+      @SP
+      AM=M+1
+      A=A-1
+      M=D
+      // push THAT
+      @THAT
+      D=M
+      @SP
+      AM=M+1
+      A=A-1
+      M=D
+      // ARG = SP-5-nArgs
+      @SP
+      D=M
+      @5
+      D=D-A
+      // nArgsはない
+      @ARG
+      M=D
+      // LCL = SP
+      @SP
+      D=M
+      @LCL
+      M=D
+      // goto f
+      @Sys.init
+      0;JMP
+      ($ret.0)
     ASM
     @file.print(asm)
   end
